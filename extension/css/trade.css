@@ -1,0 +1,11 @@
+#statusBar,
+.linkBack {
+  margin-left: 36px;
+}
+
+.item_impact {
+  display: inline-block;
+  text-align: left;
+  vertical-align: top;
+  margin: 5px;
+}

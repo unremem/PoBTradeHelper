@@ -1,0 +1,10 @@
+{
+    "name": "com.google.chrome.pob.tradehelper",
+    "description": "Native host that connects to your local PoB and queries the impact of trade on your build.",
+    "path": "pob-trade-helper-native-host.bat",
+    "type": "stdio",
+    "allowed_origins": [
+        "chrome-extension://knldjmfmopnpolahpmmgbagdohdnhkik/",
+        "chrome-extension://mjfbfnejcdlklnckimdgkbakfpdljama/"
+    ]
+}

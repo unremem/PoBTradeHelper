@@ -3,4 +3,4 @@
 :: found in the LICENSE file.
 :: Change HKCU to HKLM if you want to install globally.
 :: %~dp0 is the directory containing this bat script and ends with a backslash.
-REG ADD "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.google.chrome.example.echo" /ve /t REG_SZ /d "%~dp0com.google.chrome.example.echo-win.json" /f
+REG ADD "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.google.chrome.pob.tradehelper" /ve /t REG_SZ /d "%~dp0com.google.chrome.pob.tradehelper-win.json" /f

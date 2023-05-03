@@ -12,7 +12,6 @@ function askItemImpact(node) {
   // Create div to contain item impact
   let itemImpact = document.createElement('div')
   itemImpact.className = 'item_impact'
-  itemImpact.innerHTML = 'Loading impact of the item...'
   node.getElementsByClassName('right')[0].appendChild(itemImpact)
 
   itemByDataId[dataId] = [node, itemImpact]

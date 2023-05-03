@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+import struct
+import sys
+import threading
+import queue
+import base64
+import json
+
+from pob_wrapper.pob_wrapper import PathOfBuilding
+
+pob = None
+
+# On Windows, the default I/O mode is O_TEXT. Set this to O_BINARY
+# to avoid unwanted modifications of the input/output streams.
+if sys.platform == "win32":
+  import os, msvcrt
+  msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
+  msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
+# Helper function that sends a message to the webapp.
+def send_message(message):
+   # Write message size.
+  sys.stdout.buffer.write(struct.pack('I', len(message)))
+  # Write the message itself.
+  sys.stdout.write(message)
+  sys.stdout.flush()
+
+# Thread that reads messages from the webapp.
+def read_thread_func():
+  message_number = 0
+  while 1:
+    # Read the message length (first 4 bytes).
+    text_length_bytes = sys.stdin.buffer.read(4)
+    if len(text_length_bytes) == 0:
+      sys.exit(0)
+    text_length = struct.unpack('@I', text_length_bytes)[0]
+
+    # Read the text (JSON object) of the message.
+    text = sys.stdin.buffer.read(text_length).decode('utf-8')
+    json_object = json.loads(text)
+    match json_object['type']:
+      case 'load_pob':
+        pob_path = base64.b64decode(json.dumps(json_object['path']).encode('utf-8')).decode('utf-8').replace('\r', '')
+        pob_install = pob_path
+        pob = PathOfBuilding(pob_path, pob_install)
+        send_message('{"type": "pob_loaded"}')
+      case 'load_build':
+        # WIP
+        send_message('"Loading build"')
+        builds_path = pob.get_builds_dir()
+        pob.load_build(rf'{builds_path}\UnrememFB.xml')
+        pob.update_build()
+      case 'get_item_impact':
+        item_text = base64.b64decode(json.dumps(json_object['item']).encode('utf-8')).decode('utf-8').replace('\r', '')
+        impact_text = base64.b64encode(pob.test_item_as_html(item_text).encode('utf-8')).decode('utf-8')
+        data_id = json.dumps(json_object['dataId'])
+        send_message('{"type": "set_item_impact", "impact": "%s", "dataId": %s}' % (impact_text, data_id))
+      case _:
+        send_message('{"echo": %s}' % text)
+
+def Main():
+  send_message('{"type": "host_started"}')
+  read_thread_func()
+  sys.exit(0)
+
+if __name__ == '__main__':
+  Main()

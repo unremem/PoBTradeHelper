@@ -7,42 +7,9 @@
     ? chrome.runtime.getManifest()
     : browser.runtime.getManifest()
   let script = null
+  let enabled = null // Whether the automatic impact computation is enabled or not
 
   let errorIcon = `<img src="${chrome.runtime.getURL('img/error-40.png')}">`
-
-  /**
-   * Add a title to the panel
-   * @param {String} label - The title to add
-   */
-  function addTitle(label) {
-    let wrap = document.createElement('div')
-    wrap.className = 'title-wrap'
-    let title = document.createElement('div')
-    title.className = 'title'
-    title.innerText = label
-    wrap.appendChild(title)
-    controlPanel.appendChild(wrap)
-  }
-
-  /**
-   * Add a setting to the panel
-   * @param {String|Component} label - The label of the setting
-   * @param {Component} input - The input of the setting
-   */
-  function addSetting(label, input) {
-    let wrap = document.createElement('div')
-    wrap.className = 'setting-wrap'
-
-    if (typeof label == 'string') {
-      let temp = label
-      label = document.createElement('label')
-      label.className = 'pte-label'
-      label.innerText = temp
-    }
-    wrap.appendChild(label)
-    wrap.appendChild(input)
-    controlPanel.appendChild(wrap)
-  }
 
   /**
    * Handle communication
@@ -80,6 +47,21 @@
   });
 
   /**
+   * Enable/Disable the impact computation
+   * @param {boolean} value - If it should be enabled or not
+   */
+  function toggle(value) {
+    enabled = typeof value == 'boolean'
+      ? value
+      : !enabled
+
+    window.top.postMessage({
+      message: 'toggle',
+      enabled: enabled
+    })
+  }
+
+  /**
    * Build User Interface
    */
   let controlPanel = document.createElement('div')
@@ -102,34 +84,67 @@
 
   let panelTitle = document.createElement('div')
   panelTitle.setAttribute('id', 'panel-title')
-  panelTitle.innerHTML = `${manifest.name} v${manifest.version}`
+  panelTitle.innerHTML = `${manifest.name}`
   controlPanel.appendChild(panelTitle)
 
   // Settings for POB
-  addTitle('POB settings')
+  let settings = document.createElement('section')
+  settings.className = 'pte-section'
+  let title = document.createElement('h1')
+  title.className = 'pte-section-title'
+  title.innerText = 'POB settings'
+  settings.appendChild(title)
+
+  // The switch to enable/disable the extension (memorize the state)
+  let switchSection = document.createElement('div')
+  let toggleSwitch = document.createElement('input')
+  toggleSwitch.setAttribute('type', 'checkbox')
+  toggleSwitch.className = 'switch'
+  switchSection.appendChild(toggleSwitch)
+
+  let toggleLabel = document.createElement('label')
+  toggleLabel.innerText = 'Getting state...'
+  switchSection.appendChild(toggleLabel)
+
+  toggleSwitch.addEventListener('change', e => {
+    toggleLabel.innerText = toggleSwitch.checked
+      ? 'Enabled'
+      : 'Disabled'
+    storage.set({ enabled: toggleSwitch.checked })
+    toggle(toggleSwitch.checked)
+  })
+  settings.appendChild(switchSection)
 
   // PoB link input
   let pobLinkInput = document.createElement('input')
   pobLinkInput.className = 'pte-input'
   pobLinkInput.setAttribute('placeholder', 'Path of POB on disk')
-  controlPanel.appendChild(pobLinkInput)
+  settings.appendChild(pobLinkInput)
 
   let pobLinkButton = document.createElement('button')
   pobLinkButton.className = 'pte-button'
-  pobLinkButton.innerHTML = 'SET POB PATH'
+  pobLinkButton.innerHTML = 'Set PoB path'
   pobLinkButton.addEventListener('click', e => {
     storage.set({ build_path: pobLinkInput.value }, () => {
       setBuild(pobLinkInput.value)
     })
   })
-  controlPanel.appendChild(pobLinkButton)
+  settings.appendChild(pobLinkButton)
+  controlPanel.appendChild(settings)
 
-  addTitle('Console')
+  // Console
+  let consoleSection = document.createElement('section')
+  consoleSection.className = 'pte-section'
+  title = document.createElement('h1')
+  title.className = 'pte-section-title'
+  title.innerText = 'Console'
+  consoleSection.appendChild(title)
+  controlPanel.appendChild(consoleSection)
 
   // Message
   let messageDiv = document.createElement('div')
   messageDiv.setAttribute('id', 'pte-message')
-  controlPanel.appendChild(messageDiv)
+  consoleSection.appendChild(messageDiv)
 
   let messageTimeout = null
   function message(content, type = 'message', timeout = null, append = false) {
@@ -166,7 +181,7 @@
   let githubLink = document.createElement('a')
   githubLink.setAttribute('id', 'github-link')
   githubLink.setAttribute('target', '_blank')
-  githubLink.setAttribute('href', 'https://github.com/unremem')
+  githubLink.setAttribute('href', 'https://github.com/unremem/PoBTradeHelper')
   githubLink.innerHTML = githubLogo + 'GitHub'
   footer.appendChild(githubLink)
 
@@ -180,6 +195,7 @@
     script = document.createElement('script')
     script.setAttribute('type', 'text/javascript')
     script.setAttribute('src', chrome.runtime.getURL('js/trade-injected.js'))
+    script.setAttribute('enabled', enabled)
     document.body.appendChild(script)
   }
 
@@ -193,11 +209,17 @@
   }
 
   // initialize
-  storage.get(['build_path'], res => {
+  storage.get(['build_path', 'enabled'], res => {
     if (res.build_path) {
       pobLinkInput.value = res.build_path
       setBuild(res.build_path)
     }
+
+    enabled = typeof res.enabled == 'undefined' || res.enabled
+    toggleSwitch.checked = enabled
+    toggleLabel.innerText = enabled
+      ? 'Enabled'
+      : 'Disabled'
 
     injectCode()
   })

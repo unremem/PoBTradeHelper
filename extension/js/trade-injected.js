@@ -30,13 +30,13 @@ let observer = new MutationObserver((mutationsList, observer) => {
           askItemImpact(node)
         } else { // Not enabled, propose a link to get stats
           let button = document.createElement('button')
-          button.className = 'btn btn-default trade-button'
+          button.className = 'pte-button trade-button'
           button.innerText = 'Compute the impact of the item'
           button.addEventListener('click', () => {
-            node.removeChild(button)
+            node.getElementsByClassName('right')[0].removeChild(button)
             askItemImpact(node)
           })
-          node.appendChild(button)
+          node.getElementsByClassName('right')[0].appendChild(button)
         }
       }
     }
@@ -47,6 +47,8 @@ window.addEventListener('message', e => {
   if (e.data.message == 'set_item_impact') {
     let itemImpact = itemByDataId[e.data.dataId][1]
     itemImpact.innerHTML = e.data.itemImpact
+  } else if (e.data.message == 'toggle') {
+    enabled = e.data.enabled
   }
 }, false)
 

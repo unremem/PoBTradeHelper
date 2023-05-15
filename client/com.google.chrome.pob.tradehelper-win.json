@@ -4,7 +4,7 @@
     "path": "pob-trade-helper-native-host.bat",
     "type": "stdio",
     "allowed_origins": [
-        "chrome-extension://knldjmfmopnpolahpmmgbagdohdnhkik/",
+        "chrome-extension://jfmagnicmcjddboobcfaicohajkdmcpc/",
         "chrome-extension://mjfbfnejcdlklnckimdgkbakfpdljama/"
     ]
 }
